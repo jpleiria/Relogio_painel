@@ -14,7 +14,7 @@
         /* --- RESET & BASICS --- */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
-        :root { --clock-scale: 1; }
+        :root { --clock-scale: 2; /* Começa logo no valor 2 por segurança CSS */ }
 
         body {
             font-family: 'Outfit', sans-serif;
@@ -80,23 +80,18 @@
         }
         .ctrl-btn:hover { color: #fff; transform: scale(1.1); }
 
-        /* --- SHIFT PROGRESS BAR (CORRIGIDO) --- */
+        /* --- SHIFT PROGRESS BAR --- */
         .progress-container {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; 
             background: rgba(255,255,255,0.05); z-index: 50;
         }
         .progress-fill {
             height: 100%; width: 0%;
-            /* Gradiente: Vermelho -> Amarelo -> Verde */
             background-image: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #22c55e 100%);
-            
-            /* TRUQUE: O gradiente tem o tamanho do ECRÃ (100vw), não da barra */
-            /* Assim, quando a barra cresce, ela apenas "revela" o gradiente que já lá está */
             background-size: 100vw 100%; 
             background-repeat: no-repeat;
-            
             transition: width 1s linear;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); /* Brilho neutro */
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
         
         /* --- WATCHDOG --- */
@@ -354,7 +349,7 @@
         // --- CONFIG ---
         const fontClasses = ['font-style-outfit', 'font-style-chakra', 'font-style-tech', 'font-style-orbit'];
         let currentFontIdx = 0;
-        let clockScale = 1.0;
+        let clockScale = 2.0; // VALOR INICIAL NO MÁXIMO
 
         function loadPrefs() {
             const savedFont = localStorage.getItem('cmos_font_pref');
