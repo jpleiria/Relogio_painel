@@ -22,13 +22,15 @@
             background-color: #1a202c;
             cursor: default;
             user-select: none;
-            transition: all 0.5s ease;
+            transition: all 0.5s ease; /* Importante para o Pixel Shift suave */
         }
 
         /* --- BACKGROUND --- */
         .background-wrapper {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1; overflow: hidden;
+            /* Scale aumentado para permitir o Pixel Shift sem mostrar bordas pretas */
+            transform: scale(1.02); 
         }
 
         .bg-image {
@@ -51,11 +53,34 @@
             animation: borderFlash 1s infinite alternate;
         }
 
+        /* --- FULLSCREEN BTN --- */
+        .fullscreen-btn {
+            position: absolute; top: 20px; right: 20px;
+            color: rgba(255,255,255,0.3); cursor: pointer;
+            z-index: 50; transition: opacity 0.3s;
+            font-size: 1.2rem;
+        }
+        .fullscreen-btn:hover { color: rgba(255,255,255,0.8); }
+
+        /* --- WATCHDOG (Online Status) --- */
+        .watchdog-indicator {
+            position: absolute; bottom: 15px; right: 15px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background-color: #22c55e; /* Verde */
+            box-shadow: 0 0 8px #22c55e;
+            z-index: 50; transition: all 0.3s ease;
+        }
+        .watchdog-indicator.offline {
+            background-color: #ef4444; /* Vermelho */
+            box-shadow: 0 0 15px #ef4444;
+            animation: blinkFast 1s infinite;
+        }
+
         /* --- LAYOUT --- */
         main {
             height: 100%; width: 100%;
             display: flex; flex-direction: column;
-            align-items: center; /* Garante centralização horizontal total */
+            align-items: center;
             padding: 4vh 3vw;
         }
 
@@ -67,7 +92,7 @@
             z-index: 10;
         }
         
-        body.shift-alert-active .clock-section { transform: translateY(-10px); } /* Sobe um pouco no alerta */
+        body.shift-alert-active .clock-section { transform: translateY(-10px); }
 
         .time-wrapper {
             font-size: 14vh; font-weight: 800; line-height: 0.9;
@@ -84,128 +109,93 @@
 
         /* --- ÁREA CENTRAL DE ALERTA --- */
         .shift-anim-container {
-            flex-grow: 1;
-            width: 100%;
-            display: flex;
-            flex-direction: column; /* Organiza: Texto em cima, Cartões em baixo */
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            opacity: 0;
+            flex-grow: 1; width: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            gap: 30px; opacity: 0;
             transition: opacity 0.5s ease;
             pointer-events: none;
         }
 
         body.shift-alert-active .shift-anim-container { opacity: 1; }
 
-        /* Título do Alerta */
         .shift-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            color: #ef4444;
-            text-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
-            background: rgba(0,0,0,0.4);
-            padding: 10px 40px;
-            border-radius: 50px;
+            font-size: 2.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 4px;
+            color: #ef4444; text-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
+            background: rgba(0,0,0,0.4); padding: 10px 40px; border-radius: 50px;
             border: 1px solid rgba(239, 68, 68, 0.3);
-            transform: scale(0.9);
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(0.9); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        body.shift-alert-active .shift-title {
-            transform: scale(1);
-            animation: textPulse 1.5s infinite alternate;
-        }
+        body.shift-alert-active .shift-title { transform: scale(1); animation: textPulse 1.5s infinite alternate; }
 
-        /* Linha dos Cartões */
-        .cards-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 50px; /* Espaço entre os cartões */
-            perspective: 1000px;
-        }
+        .cards-row { display: flex; align-items: center; justify-content: center; gap: 50px; perspective: 1000px; }
 
         .team-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 25px 40px;
-            border-radius: 15px;
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-            min-width: 220px;
-            transform: scale(0.9);
-            transition: transform 0.5s ease, opacity 0.5s ease;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2); padding: 25px 40px;
+            border-radius: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+            min-width: 220px; transform: scale(0.9); transition: transform 0.5s ease, opacity 0.5s ease;
         }
 
         .team-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.9; font-weight: 600; }
         .team-icon { font-size: 3rem; }
 
-        /* Estados Iniciais */
         .outgoing { opacity: 0; transform: translateX(30px); }
         .incoming { opacity: 0; transform: translateX(-30px); }
         .sync-icon { font-size: 2.5rem; opacity: 0; color: #fbbf24; }
 
-        /* Estados Ativos */
-        body.shift-alert-active .outgoing {
-            opacity: 1;
-            animation: driftLeft 3s ease-in-out infinite alternate;
-        }
-        
+        body.shift-alert-active .outgoing { opacity: 1; animation: driftLeft 3s ease-in-out infinite alternate; }
         body.shift-alert-active .incoming {
-            opacity: 1;
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.5);
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
-            animation: pulseCard 2s ease-in-out infinite alternate;
+            opacity: 1; background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1); animation: pulseCard 2s ease-in-out infinite alternate;
         }
+        body.shift-alert-active .sync-icon { opacity: 0.8; animation: spinSlow 3s infinite linear; }
 
-        body.shift-alert-active .sync-icon {
-            opacity: 0.8;
-            animation: spinSlow 3s infinite linear;
-        }
-
-        /* --- METEOROLOGIA --- */
-        .weather-section {
-            margin-bottom: 1vh; display: flex; justify-content: center; width: 100%;
-        }
+        /* --- METEOROLOGIA (Com novos dados) --- */
+        .weather-section { margin-bottom: 1vh; display: flex; justify-content: center; width: 100%; }
         .glass-card {
             background: rgba(15, 15, 25, 0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px;
-            padding: 25px 35px; display: flex; align-items: center; gap: 40px;
+            padding: 20px 30px; display: flex; align-items: center; gap: 40px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
             width: 100%; max-width: 1100px;
         }
         .weather-current-col {
-            display: flex; align-items: center; gap: 20px; padding-right: 30px;
-            border-right: 1px solid rgba(255,255,255,0.15); min-width: 200px; justify-content: center;
+            display: flex; flex-direction: row; align-items: center; gap: 20px; padding-right: 30px;
+            border-right: 1px solid rgba(255,255,255,0.15); min-width: 250px; justify-content: center;
         }
-        .main-icon-wrapper i { font-size: 4rem; filter: drop-shadow(0 0 15px rgba(255,255,255,0.3)); animation: floatIcon 4s ease-in-out infinite; }
-        .temp-block { text-align: left; }
-        .temp-big { font-size: 3.5rem; font-weight: 700; line-height: 1; }
-        .city-name { font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; opacity: 0.6; margin-bottom: 4px;}
-        .condition { font-size: 1rem; font-weight: 300; opacity: 0.9;}
+        .main-icon-wrapper i { font-size: 3.5rem; filter: drop-shadow(0 0 15px rgba(255,255,255,0.3)); animation: floatIcon 4s ease-in-out infinite; }
         
-        .weather-forecast-col {
-            flex-grow: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; text-align: center;
+        .temp-block { text-align: left; display: flex; flex-direction: column; justify-content: center; }
+        .city-name { font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; opacity: 0.6; margin-bottom: 2px;}
+        .temp-line { display: flex; align-items: baseline; gap: 10px; }
+        .temp-big { font-size: 3rem; font-weight: 700; line-height: 1; }
+        .condition { font-size: 0.9rem; font-weight: 300; opacity: 0.9; margin-bottom: 8px;}
+        
+        /* Novos Dados Operacionais */
+        .operational-data {
+            display: grid; grid-template-columns: auto auto; gap: 8px 15px;
+            font-size: 0.8rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;
         }
-        .forecast-section-title {
-            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.5; margin-bottom: 10px; font-weight: 600; width: 100%;
-        }
+        .op-item { display: flex; align-items: center; gap: 6px; opacity: 0.8; }
+        .op-item i { width: 16px; text-align: center; color: #93c5fd; }
+        .op-val { font-weight: 600; color: #fff; }
+
+        /* Previsões */
+        .weather-forecast-col { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; overflow: hidden; text-align: center; }
+        .forecast-section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.5; margin-bottom: 8px; font-weight: 600; width: 100%; }
         .scroll-container {
-            display: flex; justify-content: space-between; gap: 10px; overflow-x: auto; padding-bottom: 5px;
-            scrollbar-width: none; -ms-overflow-style: none;
-            mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+            display: flex; justify-content: space-between; gap: 10px; overflow-x: auto;
+            scrollbar-width: none; mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
             -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
         }
         .scroll-container::-webkit-scrollbar { display: none; }
         .forecast-unit { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 60px; }
         .f-time { font-size: 0.8rem; opacity: 0.7; margin-bottom: 5px; }
-        .f-icon { font-size: 1.3rem; margin-bottom: 5px; opacity: 0.9; }
-        .f-temp { font-weight: 600; font-size: 1rem; }
-        .f-temp.min-temp { font-size: 0.8rem; opacity: 0.6; font-weight: 400; }
+        .f-icon { font-size: 1.2rem; margin-bottom: 5px; opacity: 0.9; }
+        .f-temp { font-weight: 600; font-size: 0.9rem; }
+        .f-temp.min-temp { font-size: 0.75rem; opacity: 0.6; font-weight: 400; }
 
         /* --- KEYFRAMES --- */
         @keyframes subtlePan { 0% { transform: scale(1.1) translateY(0); } 100% { transform: scale(1.15) translateY(-2%); } }
@@ -216,8 +206,8 @@
             to { box-shadow: inset 0 0 0 25px #ef4444, inset 0 0 80px rgba(239, 68, 68, 0.8); }
         }
         @keyframes spinSlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes blinkFast { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         
-        /* Animações dos Cartões */
         @keyframes driftLeft {
             0% { transform: translateX(0) scale(0.9); opacity: 0.8; }
             100% { transform: translateX(-15px) scale(0.85); opacity: 0.5; }
@@ -233,7 +223,9 @@
 
         @media (max-width: 900px) {
             .glass-card { flex-direction: column; padding: 20px; gap: 20px; }
-            .weather-current-col { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.15); padding-right: 0; padding-bottom: 20px; width: 100%; }
+            .weather-current-col { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.15); padding-right: 0; padding-bottom: 20px; width: 100%; flex-direction: column; text-align: center; }
+            .temp-block { align-items: center; }
+            .operational-data { justify-content: center; }
             .scroll-container { justify-content: flex-start; gap: 20px; }
             .team-card { min-width: 140px; padding: 15px; } 
             .team-label { font-size: 0.7rem; }
@@ -242,12 +234,18 @@
         }
     </style>
 </head>
-<body>
+<body id="body-el">
 
     <div class="background-wrapper">
         <img src="castle.jpg" alt="Castelo de Leiria" class="bg-image">
         <div class="vignette"></div>
     </div>
+
+    <div class="fullscreen-btn" onclick="toggleFullScreen()" title="Ecrã Inteiro">
+        <i class="fa-solid fa-expand" id="fs-icon"></i>
+    </div>
+
+    <div class="watchdog-indicator" id="watchdog" title="Estado do Sistema"></div>
 
     <main>
         <div class="clock-section">
@@ -289,10 +287,32 @@
                     </div>
                     <div class="temp-block">
                         <div class="city-name"><i class="fa-solid fa-location-dot"></i> Leiria, PT</div>
-                        <div class="temp-big"><span id="temp-val">--</span>°</div>
+                        <div class="temp-line">
+                            <div class="temp-big"><span id="temp-val">--</span>°</div>
+                        </div>
                         <div class="condition" id="cond-text">A iniciar...</div>
+                        
+                        <div class="operational-data">
+                            <div class="op-item" title="Vento">
+                                <i class="fa-solid fa-wind"></i> 
+                                <span class="op-val" id="wind-txt">-- km/h</span>
+                            </div>
+                            <div class="op-item" title="Direção Vento">
+                                <i class="fa-regular fa-compass"></i>
+                                <span class="op-val" id="wind-dir">--</span>
+                            </div>
+                            <div class="op-item" title="Nascer do Sol">
+                                <i class="fa-solid fa-sun" style="color:#fbbf24"></i>
+                                <span class="op-val" id="sunrise-txt">--:--</span>
+                            </div>
+                            <div class="op-item" title="Pôr do Sol">
+                                <i class="fa-solid fa-moon" style="color:#a78bfa"></i>
+                                <span class="op-val" id="sunset-txt">--:--</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
                 <div class="weather-forecast-col">
                     <div>
                         <div class="forecast-section-title">Previsão Horária</div>
@@ -308,17 +328,59 @@
     </main>
 
     <script>
-        // --- LÓGICA DO ALERTA E ANIMAÇÃO ---
+        // --- 1. FULLSCREEN TOGGLE ---
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                document.getElementById('fs-icon').classList.remove('fa-expand');
+                document.getElementById('fs-icon').classList.add('fa-compress');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    document.getElementById('fs-icon').classList.add('fa-expand');
+                    document.getElementById('fs-icon').classList.remove('fa-compress');
+                }
+            }
+        }
+
+        // --- 2. PIXEL SHIFT (Burn-in Protection) ---
+        // Move o conteúdo ligeiramente a cada 5 minutos
+        function performPixelShift() {
+            const body = document.getElementById('body-el');
+            // Move aleatoriamente entre -3px e 3px
+            const x = Math.floor(Math.random() * 7) - 3; 
+            const y = Math.floor(Math.random() * 7) - 3;
+            
+            // Aplica transform ao body (já tem transition no CSS)
+            body.style.transform = `translate(${x}px, ${y}px)`;
+            console.log(`Pixel Shift: ${x}px, ${y}px`);
+        }
+        setInterval(performPixelShift, 300000); // 5 min
+
+        // --- 3. WATCHDOG & LOGICA DE ALERTA ---
         let alertTimeout = null;
         let isAlertActive = false;
+        const watchdog = document.getElementById('watchdog');
+
+        function setSystemStatus(isOnline) {
+            if(isOnline) {
+                watchdog.classList.remove('offline');
+                watchdog.title = "Sistema Online - Dados Atualizados";
+            } else {
+                watchdog.classList.add('offline');
+                watchdog.title = "ERRO: Sem ligação ou falha na API";
+            }
+        }
+
+        // Monitorizar queda de internet do browser
+        window.addEventListener('offline', () => setSystemStatus(false));
+        window.addEventListener('online', () => setSystemStatus(true));
 
         function triggerShiftAlert() {
             if (isAlertActive) return; 
-            
             isAlertActive = true;
             document.body.classList.add('shift-alert-active');
             
-            // Remove automaticamente após 1 minuto (60000ms)
             if(alertTimeout) clearTimeout(alertTimeout);
             alertTimeout = setTimeout(() => {
                 document.body.classList.remove('shift-alert-active');
@@ -337,7 +399,6 @@
             document.getElementById('m').textContent = m;
             document.getElementById('s').textContent = s;
 
-            // Trigger Automático: 08:00:00 e 20:00:00
             if (m === '00' && s === '00') {
                 if (h === '08' || h === '20') {
                     triggerShiftAlert();
@@ -349,12 +410,12 @@
             dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
             document.getElementById('date-full').textContent = dateStr;
         }
-        
         setInterval(updateClock, 1000);
         updateClock();
 
-        // --- METEOROLOGIA ---
-        const API_URL = "https://api.open-meteo.com/v1/forecast?latitude=39.74&longitude=-8.81&current=temperature_2m,weather_code,is_day&hourly=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7";
+        // --- METEOROLOGIA (API Atualizada) ---
+        // Adicionados: wind_speed_10m, wind_direction_10m, sunrise, sunset
+        const API_URL = "https://api.open-meteo.com/v1/forecast?latitude=39.74&longitude=-8.81&current=temperature_2m,weather_code,is_day,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&forecast_days=7";
 
         const weatherMap = {
             0: { icon: 'fa-sun', text: 'Limpo' }, 1: { icon: 'fa-cloud-sun', text: 'Pouco nublado' },
@@ -365,26 +426,54 @@
             80: { icon: 'fa-cloud-showers-heavy', text: 'Aguaceiros' }, 95: { icon: 'fa-bolt', text: 'Trovoada' }
         };
 
+        // Helper: Graus para Cardeais
+        function degToCompass(num) {
+            const val = Math.floor((num / 22.5) + 0.5);
+            const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+            return arr[(val % 16)];
+        }
+
+        // Helper: Extrair HH:MM da data ISO
+        function formatTimeISO(isoString) {
+            if(!isoString) return "--:--";
+            const d = new Date(isoString);
+            return String(d.getHours()).padStart(2, '0') + ":" + String(d.getMinutes()).padStart(2, '0');
+        }
+
         function getWeatherInfo(code, isDay = 1) {
             let info = weatherMap[code] || { icon: 'fa-cloud', text: 'Nublado' };
+            // Copia o objeto para não alterar o original
+            let iconClass = info.icon;
             if (isDay === 0) {
-                if (info.icon === 'fa-sun') info.icon = 'fa-moon';
-                if (info.icon === 'fa-cloud-sun') info.icon = 'fa-cloud-moon';
+                if (iconClass === 'fa-sun') iconClass = 'fa-moon';
+                if (iconClass === 'fa-cloud-sun') iconClass = 'fa-cloud-moon';
             }
-            return info;
+            return { icon: iconClass, text: info.text };
         }
 
         async function updateWeather() {
             try {
                 const res = await fetch(API_URL);
+                if(!res.ok) throw new Error("API Error");
+                
                 const data = await res.json();
                 const curr = data.current;
                 const info = getWeatherInfo(curr.weather_code, curr.is_day);
 
+                // Básicos
                 document.getElementById('temp-val').textContent = Math.round(curr.temperature_2m);
                 document.getElementById('cond-text').textContent = info.text;
                 document.getElementById('main-icon').innerHTML = `<i class="fa-solid ${info.icon}"></i>`;
 
+                // NOVOS DADOS OPERACIONAIS
+                document.getElementById('wind-txt').textContent = Math.round(curr.wind_speed_10m) + " km/h";
+                document.getElementById('wind-dir').textContent = degToCompass(curr.wind_direction_10m);
+                
+                // Nascer/Por do Sol (índice 0 é hoje)
+                document.getElementById('sunrise-txt').textContent = formatTimeISO(data.daily.sunrise[0]);
+                document.getElementById('sunset-txt').textContent = formatTimeISO(data.daily.sunset[0]);
+
+                // Horária
                 const hCont = document.getElementById('hourly-row');
                 hCont.innerHTML = '';
                 const currentHour = new Date().getHours();
@@ -404,6 +493,7 @@
                         </div>`;
                 }
 
+                // Diária
                 const dCont = document.getElementById('daily-row');
                 dCont.innerHTML = '';
                 for (let i = 1; i <= 5; i++) {
@@ -421,11 +511,19 @@
                             <div><span class="f-temp">${max}°</span> <span class="f-temp min-temp">/${min}°</span></div>
                         </div>`;
                 }
-            } catch(e) { console.error("Erro meteo", e); }
+                
+                // Sucesso: Watchdog Verde
+                setSystemStatus(true);
+
+            } catch(e) { 
+                console.error("Erro meteo", e); 
+                // Falha: Watchdog Vermelho
+                setSystemStatus(false);
+            }
         }
         
         updateWeather();
-        setInterval(updateWeather, 300000);
+        setInterval(updateWeather, 300000); // 5 minutos
     </script>
 </body>
 </html>
