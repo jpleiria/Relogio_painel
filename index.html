@@ -39,9 +39,41 @@
         .ctrl-group:last-child { border-right: none; padding-right: 0; margin-right: 0; }
         .ctrl-btn { color: rgba(255,255,255,0.5); cursor: pointer; font-size: 1.1rem; transition: all 0.2s; }
         .ctrl-btn:hover { color: #fff; transform: scale(1.1); }
-        .progress-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); z-index: 50; }
-        .progress-fill { height: 100%; width: 0%; background-image: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #22c55e 100%); background-size: 100vw 100%; background-repeat: no-repeat; transition: width 1s linear; box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); }
-        .watchdog-indicator { position: absolute; bottom: 15px; right: 15px; width: 8px; height: 8px; border-radius: 50%; background-color: #22c55e; box-shadow: 0 0 8px #22c55e; z-index: 55; transition: all 0.3s ease; }
+        
+        /* Modificações para o label de loading e a barra */
+        .progress-container { 
+            position: fixed; /* O MAIS IMPORTANTE: Garante que fica fixo no viewport */
+            bottom: 0; left: 0; width: 100%; height: 6px; 
+            background: rgba(255,255,255,0.05); z-index: 50; 
+        }
+        .progress-fill { 
+            height: 100%; width: 0%; 
+            background-image: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #22c55e 100%); 
+            background-size: 100vw 100%; background-repeat: no-repeat; 
+            transition: width 1s linear; box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); 
+        }
+
+        /* Novo estilo para o label discreto, acima e à esquerda */
+        .progress-label {
+            position: absolute;
+            bottom: 100%; /* Posiciona acima da barra de 6px */
+            left: 5px; /* Discretamente à esquerda */
+            color: rgba(255, 255, 255, 0.4); 
+            font-size: 0.65rem; 
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            pointer-events: none; 
+            white-space: nowrap; 
+            padding-bottom: 2px;
+            /* Z-index ligeiramente superior para aparecer sobre a barra de fundo */
+            z-index: 51; 
+        }
+        .progress-label #progress-percent {
+            font-weight: 700;
+        }
+
+        .watchdog-indicator { position: fixed; bottom: 15px; right: 15px; width: 8px; height: 8px; border-radius: 50%; background-color: #22c55e; box-shadow: 0 0 8px #22c55e; z-index: 55; transition: all 0.3s ease; }
         .watchdog-indicator.offline { background-color: #ef4444; box-shadow: 0 0 15px #ef4444; animation: blinkFast 1s infinite; }
 
         /* --- LAYOUT --- */
@@ -257,9 +289,6 @@
             <div class="ctrl-btn" onclick="toggleFullScreen()"><i class="fa-solid fa-expand" id="fs-icon"></i></div>
         </div>
 
-        <div class="watchdog-indicator" id="watchdog"></div>
-        <div class="progress-container"><div class="progress-fill" id="shift-progress"></div></div>
-
         <main>
             <div class="clock-section">
                 <div class="time-wrapper" ondblclick="triggerShiftAlert()">
@@ -316,6 +345,11 @@
         </main>
     </div>
 
+    <div class="watchdog-indicator" id="watchdog"></div>
+    <div class="progress-container">
+        <span class="progress-label"><span id="loading-turno-text">Loading Turno - </span> <span id="progress-percent">0</span>%</span>
+        <div class="progress-fill" id="shift-progress"></div>
+    </div>
     <script>
         const fontClasses = ['font-style-outfit', 'font-style-chakra', 'font-style-tech', 'font-style-orbit'];
         let currentFontIdx = 0, clockScale = 2.0;
@@ -352,8 +386,22 @@
             document.getElementById('date-full').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
             const currentTotalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
             const startDay = 8 * 3600, startNight = 20 * 3600, shiftDuration = 12 * 3600;
-            let elapsed = (currentTotalSeconds >= startDay && currentTotalSeconds < startNight) ? currentTotalSeconds - startDay : (currentTotalSeconds >= startNight ? currentTotalSeconds - startNight : (24 * 3600 - startNight) + currentTotalSeconds);
-            document.getElementById('shift-progress').style.width = Math.min((elapsed / shiftDuration) * 100, 100) + "%";
+            
+            let elapsed;
+            if (currentTotalSeconds >= startDay && currentTotalSeconds < startNight) {
+                // Turno Diurno (08:00 a 19:59:59)
+                elapsed = currentTotalSeconds - startDay;
+            } else if (currentTotalSeconds >= startNight) {
+                // Turno Noturno (20:00 a 23:59:59)
+                elapsed = currentTotalSeconds - startNight;
+            } else {
+                // Turno Noturno (00:00 a 07:59:59) - Passou da meia-noite
+                elapsed = (24 * 3600 - startNight) + currentTotalSeconds;
+            }
+
+            const progressPercent = Math.min((elapsed / shiftDuration) * 100, 100);
+            document.getElementById('shift-progress').style.width = progressPercent + "%";
+            document.getElementById('progress-percent').textContent = Math.round(progressPercent);
         }
         setInterval(updateClock, 1000); updateClock();
         const watchdog = document.getElementById('watchdog');
