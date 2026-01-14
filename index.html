@@ -35,11 +35,34 @@
 
         /* --- CONTROLS & PROGRESS --- */
         body.shift-alert-active::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; box-shadow: inset 0 0 0 15px #dc2626, inset 0 0 50px rgba(220, 38, 38, 0.5); animation: borderFlash 1s infinite alternate; }
-        .controls-area { position: absolute; top: 20px; right: 20px; z-index: 60; display: flex; align-items: center; gap: 15px; background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 30px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
-        .ctrl-group { display: flex; gap: 10px; align-items: center; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 15px; margin-right: 5px; }
-        .ctrl-group:last-child { border-right: none; padding-right: 0; margin-right: 0; }
-        .ctrl-btn { color: rgba(255,255,255,0.5); cursor: pointer; font-size: 1.1rem; transition: all 0.2s; }
-        .ctrl-btn:hover { color: #fff; transform: scale(1.1); }
+       /* --- CONTROLS AREA (Estilo Netflix) --- */
+.controls-area { 
+    position: absolute; 
+    top: 20px; 
+    right: 20px; 
+    z-index: 60; 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+    background: rgba(0,0,0,0.3); 
+    padding: 8px 15px; 
+    border-radius: 30px; 
+    backdrop-filter: blur(5px); 
+    border: 1px solid rgba(255,255,255,0.1); 
+    
+    /* Lógica de Visibilidade: Escondido por defeito */
+    opacity: 0; 
+    transform: translateY(-20px); 
+    pointer-events: none; 
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Classe ativada pelo JavaScript quando há atividade */
+.controls-area.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
         
         .progress-container { 
             position: fixed; 
@@ -486,6 +509,53 @@
             } catch(e) { console.error(e); setSystemStatus(false); }
         }
         updateWeather(); setInterval(updateWeather, 300000);
-    </script>
+   </script>
+<script>
+    /* --- UI ACTIVITY MANAGER (Netflix Style) --- */
+    (function() {
+        const controlsArea = document.querySelector('.controls-area');
+        let activityTimer;
+        const INACTIVITY_LIMIT = 3000; // 3 segundos
+
+        function userIsActive() {
+            // Mostra os controlos e o cursor
+            if (controlsArea) {
+                controlsArea.classList.add('visible');
+                document.body.style.cursor = 'default';
+
+                // Limpa o temporizador anterior
+                clearTimeout(activityTimer);
+
+                // Define novo temporizador para esconder
+                activityTimer = setTimeout(() => {
+                    // Só esconde se o rato NÃO estiver em cima dos botões
+                    if (!controlsArea.matches(':hover')) {
+                        controlsArea.classList.remove('visible');
+                        document.body.style.cursor = 'none'; // Esconde o rato
+                    }
+                }, INACTIVITY_LIMIT);
+            }
+        }
+
+        // Detetar qualquer interação
+        const events = ['mousemove', 'mousedown', 'touchstart', 'keydown', 'wheel'];
+        events.forEach(evt => window.addEventListener(evt, userIsActive, { passive: true }));
+
+        // Impedir que esconda enquanto usamos os botões
+        if (controlsArea) {
+            controlsArea.addEventListener('mouseenter', () => {
+                clearTimeout(activityTimer);
+                controlsArea.classList.add('visible');
+                document.body.style.cursor = 'default';
+            });
+            
+            // Retomar contagem ao sair dos botões
+            controlsArea.addEventListener('mouseleave', userIsActive);
+        }
+
+        // Iniciar visível
+        userIsActive();
+    })();
+   </script>
 </body>
 </html>
